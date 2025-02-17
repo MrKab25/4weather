@@ -3,22 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Forecast</title>
+    <title>NHS Track & Field Weather</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        :root {
+            --primary-color: #C1A200;
+            --secondary-color: #000000;
+            --background-color: #1A1A1A;
+            --text-color: #FFFFFF;
+            --accent-color: #FFD700;
+        }
+        body {
+            background: var(--background-color);
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--accent-color);
+            text-align: center;
+            padding: 10px;
+            text-transform: uppercase;
+            border-bottom: 4px solid var(--primary-color);
+            width: 100%;
+        }
+        .weather-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 600px;
+            gap: 12px;
+        }
+        .weather-card {
+            width: 100%;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            transition: transform 0.2s ease-in-out;
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.2);
+        }
+        .weather-card:hover {
+            transform: scale(1.05);
+        }
+        .weather-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-900">
-    <div class="min-h-screen flex flex-col items-center justify-center px-4">
-        <h1 class="text-3xl font-bold text-blue-600 mb-4">Noblesville 4PM Weather Forecast</h1>
-        
-        <div id="weather" class="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
-            <p class="text-center text-gray-500">Loading weather data...</p>
-        </div>
-        
-        <footer class="mt-6 text-gray-500 text-sm">
-            Powered by <a href="https://open-meteo.com/" class="text-blue-600 underline">Open-Meteo API</a>
-        </footer>
+<body>
+    <div class="header">NHS Track & Field Weather</div>
+    <div id="weather" class="weather-container">
+        <p class="text-center text-gray-500">Loading forecast...</p>
     </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", getWeather);
 
-    <script src="script.js"></script>
+        async function getWeather() {
+            const url = "https://api.open-meteo.com/v1/forecast?latitude=40.0456&longitude=-86.0086&hourly=temperature_2m,apparent_temperature,precipitation_probability,cloudcover,weathercode&timezone=America/New_York";
+            const container = document.getElementById("weather");
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error("Weather data unavailable.");
+                
+                const data = await response.json();
+                const forecast = extractWeekdayForecast(data);
+                displayForecast(forecast);
+            } catch (error) {
+                container.innerHTML = `<p class='text-center text-red-500 font-bold'>Error: ${error.message}</p>`;
+            }
+        }
+
+        function extractWeekdayForecast(data) {
+            const times = data.hourly.time;
+            const temps = data.hourly.temperature_2m;
+            const feelsLike = data.hourly.apparent_temperature;
+            const precip = data.hourly.precipitation_probability;
+            const clouds = data.hourly.cloudcover;
+            
+            let forecast = {};
+            for (let i = 0; i < times.length; i++) {
+                let [date, hour] = times[i].split("T");
+                let weekday = new Date(date).toLocaleDateString("en-US", { weekday: "long" });
+                
+                if (hour === "16:00" && !["Saturday", "Sunday"].includes(weekday)) {
+                    forecast[date] = {
+                        day: weekday,
+                        temperature: temps[i],
+                        feelsLike: feelsLike[i],
+                        precipitation: precip[i],
+                        cloudCover: clouds[i],
+                        icon: getWeatherIcon(clouds[i], precip[i])
+                    };
+                }
+            }
+            return forecast;
+        }
+
+        function getWeatherIcon(cloudCover, precipitation) {
+            if (precipitation > 50) return "🌧️";
+            if (cloudCover < 20) return "☀️";
+            if (cloudCover < 50) return "⛅";
+            if (cloudCover < 80) return "🌥️";
+            return "☁️";
+        }
+
+        function displayForecast(forecast) {
+            const container = document.getElementById("weather");
+            container.innerHTML = "";
+            
+            for (const [date, data] of Object.entries(forecast)) {
+                container.innerHTML += `
+                    <div class="weather-card">
+                        <div class="weather-icon">${data.icon}</div>
+                        <p>${data.day}</p>
+                        <p>${data.temperature}°F (Feels like: ${data.feelsLike}°F)</p>
+                        <p>Cloud Cover: ${data.cloudCover}%</p>
+                        <p>Precipitation: ${data.precipitation}%</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
 </body>
 </html>
