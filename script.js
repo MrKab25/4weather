@@ -4,7 +4,7 @@ async function getWeather() {
     const url = "https://api.open-meteo.com/v1/forecast?latitude=40.0456&longitude=-86.0086&hourly=temperature_2m,apparent_temperature,precipitation_probability,cloudcover&timezone=America/New_York";
     const container = document.getElementById("weather");
     
-    container.innerHTML = "<p>Loading weather data...</p>";
+    container.innerHTML = `<p class="text-center text-gray-500">Fetching weather data...</p>`;
 
     try {
         const response = await fetch(url);
@@ -15,7 +15,7 @@ async function getWeather() {
         
         displayForecast(forecast);
     } catch (error) {
-        container.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
+        container.innerHTML = `<p class="text-center text-red-500 font-bold">Error: ${error.message}</p>`;
     }
 }
 
@@ -47,11 +47,12 @@ function displayForecast(forecast) {
 
     for (const [date, data] of Object.entries(forecast)) {
         container.innerHTML += `
-            <p><strong>${formatDate(date)}</strong></p>
-            <p>🌡️ ${data.temperature}°F (Feels like: ${data.feelsLike}°F)</p>
-            <p>☁️ Cloud Cover: ${data.cloudCover}%</p>
-            <p>🌧️ Precipitation: ${data.precipitation}%</p>
-            <hr>
+            <div class="bg-blue-100 p-4 rounded-lg shadow-md mb-4">
+                <p class="text-lg font-semibold text-gray-700">${formatDate(date)}</p>
+                <p class="text-xl font-bold text-blue-700">🌡️ ${data.temperature}°F (Feels like: ${data.feelsLike}°F)</p>
+                <p class="text-gray-600">☁️ Cloud Cover: <span class="font-semibold">${data.cloudCover}%</span></p>
+                <p class="text-gray-600">🌧️ Precipitation: <span class="font-semibold">${data.precipitation}%</span></p>
+            </div>
         `;
     }
 }

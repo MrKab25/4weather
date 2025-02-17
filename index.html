@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>4PM Weather Forecast</title>
-    <link rel="stylesheet" href="style.css">	
+    <title>Weather Forecast</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h1>Noblesville 4PM Weather Forecast</h1>
-    <div id="weather"></div>
+<body class="bg-gray-100 text-gray-900">
+    <div class="min-h-screen flex flex-col items-center justify-center px-4">
+        <h1 class="text-3xl font-bold text-blue-600 mb-4">Noblesville 4PM Weather Forecast</h1>
+        
+        <div id="weather" class="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
+            <p class="text-center text-gray-500">Loading weather data...</p>
+        </div>
+        
+        <footer class="mt-6 text-gray-500 text-sm">
+            Powered by <a href="https://open-meteo.com/" class="text-blue-600 underline">Open-Meteo API</a>
+        </footer>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
