@@ -73,7 +73,7 @@
         document.addEventListener("DOMContentLoaded", getWeather);
 
         async function getWeather() {
-            const url = "https://api.open-meteo.com/v1/forecast?latitude=40.0456&longitude=-86.0086&hourly=temperature_2m,apparent_temperature,precipitation_probability,cloudcover,weathercode&timezone=America/New_York&models=gfs_seamless";
+            const url = "https://api.open-meteo.com/v1/forecast?latitude=40.0456&longitude=-86.0086&hourly=temperature_2m,apparent_temperature,precipitation_probability,cloudcover,weathercode&timezone=America/New_York&models=meteofrance_seamless";
             const container = document.getElementById("weather");
             
             try {
@@ -139,5 +139,6 @@
             }
         }
     </script>
+<a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>
 </body>
 </html>
