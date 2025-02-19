@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(to right, #2193b0, #6dd5ed);
+            margin: 0;
+            padding: 20px;
+            color: #fff;
+        }
+        .container {
+            width: 75%; /* Increased by 25% */
+            max-width: 800px; /* Adjusted max-width for larger screen sizes */
+            margin: auto;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+        h1 {
+            margin-bottom: 10px;
+            font-size: 28px; /* Increased font size */
+        }
+        .update-time {
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+        .forecast {
+            margin-top: 15px;
+            text-align: left;
+        }
+        .day {
+            padding: 20px;
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+        h3 {
+            margin: 0;
+            font-size: 20px; /* Increased font size */
+        }
+        p {
+            margin: 8px 0;
+            font-size: 16px; /* Increased font size for readability */
+        }
+        .loading {
+            font-size: 1.5em;
+            color: #f1f1f1;
+        }
+
+        /* Responsive design for mobile devices */
+        @media (max-width: 600px) {
+            .container {
+                width: 90%; /* Ensure it fills the screen width */
+                padding: 15px; /* Reduced padding for smaller screens */
+            }
+            h1 {
+                font-size: 24px; /* Adjusted font size for smaller screens */
+            }
+            .day {
+                padding: 15px; /* Less padding on small screens */
+            }
+            p {
+                font-size: 14px; /* Reduced font size for mobile */
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>5-Day Weather Forecast</h1>
+    <p class="update-time">Last updated: <span id="update-time">Loading...</span></p>
+    <div id="forecast-container" class="forecast">
+        <p class="loading">Fetching weather data...</p>
+    </div>
+</div>
+
+<script>
+    async function fetchWeather() {
+        const latitude = 40.0456; // Noblesville, IN
+        const longitude = -86.0086;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,apparent_temperature,precipitation_probability&timezone=America/New_York&forecast_days=5&temperature_unit=fahrenheit`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            document.getElementById('update-time').textContent = new Date().toLocaleString();
+
+            const forecastContainer = document.getElementById('forecast-container');
+            forecastContainer.innerHTML = '';
+
+            const hourly = data.hourly;
+            const timeStamps = hourly.time;
+            const temps = hourly.temperature_2m;
+            const feelsLike = hourly.apparent_temperature;
+            const precip = hourly.precipitation_probability;
+
+            const dailyData = {};
+
+            for (let i = 0; i < timeStamps.length; i++) {
+                const date = timeStamps[i].split('T')[0]; // Extract date
+                const time = timeStamps[i].split('T')[1]; // Extract time
+                const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
+
+                if (!dailyData[date]) {
+                    dailyData[date] = { 
+                        dayName: dayName,
+                        lowTemp: Infinity, lowTempTime: '',
+                        highTemp: -Infinity, highTempTime: '',
+                        lowFeel: Infinity, lowFeelTime: '',
+                        highFeel: -Infinity, highFeelTime: '',
+                        precipAtLowTemp: 0, precipAtHighTemp: 0,
+                        precipAtLowFeel: 0, precipAtHighFeel: 0
+                    };
+                }
+
+                if (temps[i] < dailyData[date].lowTemp) {
+                    dailyData[date].lowTemp = temps[i];
+                    dailyData[date].lowTempTime = time;
+                    dailyData[date].precipAtLowTemp = precip[i];
+                }
+
+                if (temps[i] > dailyData[date].highTemp) {
+                    dailyData[date].highTemp = temps[i];
+                    dailyData[date].highTempTime = time;
+                    dailyData[date].precipAtHighTemp = precip[i];
+                }
+
+                if (feelsLike[i] < dailyData[date].lowFeel) {
+                    dailyData[date].lowFeel = feelsLike[i];
+                    dailyData[date].lowFeelTime = time;
+                    dailyData[date].precipAtLowFeel = precip[i];
+                }
+
+                if (feelsLike[i] > dailyData[date].highFeel) {
+                    dailyData[date].highFeel = feelsLike[i];
+                    dailyData[date].highFeelTime = time;
+                    dailyData[date].precipAtHighFeel = precip[i];
+                }
+            }
+
+            Object.keys(dailyData).forEach(date => {
+                const dayData = dailyData[date];
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day';
+                dayDiv.innerHTML = `
+                    <h3>${dayData.dayName}, ${new Date(date).toLocaleDateString()}</h3>
+                    <p><strong>Low Temp:</strong> ${dayData.lowTemp}°F at ${dayData.lowTempTime} | Precip: ${dayData.precipAtLowTemp}%</p>
+                    <p><strong>Low Feel:</strong> ${dayData.lowFeel}°F at ${dayData.lowFeelTime} | Precip: ${dayData.precipAtLowFeel}%</p>
+                    <p><strong>High Temp:</strong> ${dayData.highTemp}°F at ${dayData.highTempTime} | Precip: ${dayData.precipAtHighTemp}%</p>
+                    <p><strong>High Feel:</strong> ${dayData.highFeel}°F at ${dayData.highFeelTime} | Precip: ${dayData.precipAtHighFeel}%</p>
+                `;
+                forecastContainer.appendChild(dayDiv);
+            });
+
+        } catch (error) {
+            document.getElementById('forecast-container').innerHTML = `<p>Error fetching weather data.</p>`;
+            console.error(error);
+        }
+    }
+
+    fetchWeather();
+</script>
+
+</body>
+</html>
